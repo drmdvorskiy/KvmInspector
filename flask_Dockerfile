@@ -1,0 +1,11 @@
+FROM python:3.9
+ADD *.py /
+ADD .env /
+ADD templates /templates
+ADD static /static
+ADD .ssh /root/.ssh
+
+RUN python3 -m pip install --upgrade pip
+RUN pip install Flask==2.1.3 python-dotenv==0.20.0 requests==2.25.1 unix==1.0 kvm==1.1.1
+
+CMD [ "python3", "/flask_app.py" ]

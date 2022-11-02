@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang = "ru" data-bs-set-darkmode-onload="true">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link type="image/png" sizes="16x16" rel="icon" href="{{ url_for('static', filename = 'favicon16.png') }}">
+    <link type="image/png" sizes="32x32" rel="icon" href="{{ url_for('static', filename = 'favicon32.png') }}">
+    <link type="image/png" sizes="96x96" rel="icon" href="{{ url_for('static', filename = 'favicon96.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/all.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename = 'css/css2.css') }}">
+    <!-- Dark MDB theme -->
+    <link id="theme" rel="stylesheet" href="{{ url_for('static', filename = 'css/mdb.dark.min.css') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename = 'js/kolorwheel.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename = 'js/chart.js') }}"></script>
+    <script type="text/javascript">
+    //<![CDATA[
+        function newChart(id, labeledData, convert=false) {
+            const baseLite = -20;
+            const liteInc = 20;
+            const satDec = 35;
+            const style = getComputedStyle(document.body);
+            const primary = style.getPropertyValue('--bs-primary');
+            const baseColor = new KolorWheel(primary);
+            const baseColorLite = new KolorWheel(baseColor);
+            baseColorLite.l += liteInc;
+            const hueInc = Math.round(360/Object.keys(labeledData).length);
+            var hue = 0;
+            var labels = [];
+            var data = [];
+            var bgColors = [baseColor.getHex()];
+            var hoverBgColors = [baseColorLite.getHex()];
+            for (var key in labeledData) {
+                if (labels.length > 0) {
+                    var nextBgColor = new KolorWheel(baseColor);
+                    nextBgColor.l += baseLite;
+                    nextBgColor.s -= satDec;
+                    nextBgColor.h += hue;
+                    bgColors.push(nextBgColor.getHex());
+                    nextBgColor.l += liteInc;
+                    hoverBgColors.push(nextBgColor.getHex());
+                }
+                labels.push(key);
+                data.push(labeledData[key]);
+                hue += hueInc;
+            }
+
+            return new Chart(document.getElementById(id).getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: bgColors,
+                        hoverBackgroundColor: hoverBgColors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    convert: convert,
+                    legend: {display: false}
+                }
+            });
+        }
+    //]]>
+    </script>
+    <style>
+    .chart-container {
+        height: 40%;
+        width: 40%;
+        margin: auto;
+    }
+    </style>
+    <title>KVM Inspector</title>
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark position-fixed w-100">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <input class="form-control form-control-dark mx-5" id="Search" type="text" placeholder="Search for node / VM / VM disk">
+        </div>
+    </div>
+</nav>
+
+<button type="button" class="btn btn-success btn-floating btn-lg" id="btn-back-to-top"
+    style="position:fixed; bottom:20px; right:20px; display:none;">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<div class="container">
+    <div class="row py-3">&nbsp;</div>
+{% for kvm_host, resource in inspect.items() %}
+    <div name="NoDe">
+        <span role="button" onclick="SwitchVisibility('{{ kvm_host }}_node')" class="badge btn-outline-success rounded-pill fw-normal fs-6 px-3 py-2 align-middle my-1">{{ kvm_host }}</span>
+        <i role="button" onclick="SwitchVisibility('{{ kvm_host }}_vms')" class="fab fa-buffer fa-2x align-middle my-1"></i>
+        <div id="{{ kvm_host }}_node" style="display: none" class="container mx-0 px-2">
+            <div class="row">
+                <div class="col">
+                    <span class="text-info me-2">CPU model</span>{{ resource['cpu_model'] }}<br>
+                    <span class="text-info me-2">CPU sockets</span>{{ resource['cpu_sockets'] }}<br>
+                    <span class="text-info me-2">Threads per core</span>{{ resource['threads_per_core'] }}<br>
+                    <span class="text-info me-2">Total CPUs</span>{{ resource['total_cpus'] }}<br>
+                    <span class="text-info me-2">Total memory size</span>{{ HumanReadFormat(resource['total_memory_size'] | int) }}<br>
+                    {% if (resource['domains_cpu_used'] + CpuForOs) > resource['total_cpus'] %}
+                        <span class="text-info me-2">Domains CPUs used</span><span class="text-danger fw-bold me-2">{{ resource['domains_cpu_used'] }}</span><br>
+                    {% else %}
+                        <span class="text-info me-2">Domains CPUs used</span>{{ resource['domains_cpu_used'] }}<br>
+                    {% endif %}
+                    <span class="text-info me-2">Domains disk used</span>{{ HumanReadFormat(resource['domains_disk_used'] | int) }}<br>
+                    {% if (resource['domains_memory_used'] + MemoryForOs) > (resource['total_memory_size'] | int) %}
+                        <span class="text-info me-2">Domains memory used</span><span class="text-danger fw-bold me-2">{{ HumanReadFormat(resource['domains_memory_used'] | int) }}</span><br>
+                    {% else %}
+                        <span class="text-info me-2">Domains memory used</span>{{ HumanReadFormat(resource['domains_memory_used'] | int) }}<br>
+                    {% endif %}    
+                    <span class="text-info me-2">VNETs count</span>{{ resource['vnet_count'] }}<br>
+                </div>
+                <div class="col">
+                    <table class="table-sm mb-0">
+                        <thead>
+                            <tr class="text-info">
+                                <th class="px-2 pt-0 pb-0 fw-normal">Device name</th>
+                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal">Mount point</th>
+                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal">Device size</th>
+                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal">Device free size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for disk in resource['disks'] %}
+                            <tr>
+                                <td class="px-2 text-start">{{ disk['device_name'] }}</td>
+                                <td class="px-2 text-start">{{ disk['mount_point'] }}</td>
+                                <td class="px-2 text-center">{{ disk['device_size'] }}</td>
+                                <td class="px-2 text-center">{{ disk['device_free_size'] }}</td> 
+                            </tr>
+                        {% endfor %}
+                        </tbody>            
+                    </table>
+                    <div class="row mb-2">
+                        <div class="chart-container mx-0 px-0 mt-1">
+                            <span class="badge rounded-pill bg-dark">CPU</span>
+                            <canvas id="{{ kvm_host }}CPUChart"></canvas>
+                            <script type="text/javascript">
+                            //<![CDATA[
+                                newChart("{{ kvm_host }}CPUChart",{
+                                    {% for domain in resource['domains'] if domain['state'] == 'running' %}
+                                    "{{ domain['name'] }}":{{ domain['vcpus'] }},
+                                    {% endfor %}
+                                    {% if resource['total_cpus'] - resource['domains_cpu_used'] > 0 %}
+                                    "[FREE]":{{ resource['total_cpus'] - resource['domains_cpu_used'] }}
+                                    {% endif %}
+                                }
+                                );
+                            //]]>
+                            </script>
+                        </div>
+                        <div class="chart-container mx-0 px-0 mt-1">
+                            <span class="badge rounded-pill bg-dark">RAM</span>
+                            <canvas id="{{ kvm_host }}RAMChart"></canvas>
+                            <script type="text/javascript">
+                            //<![CDATA[
+                                newChart("{{ kvm_host }}RAMChart",{
+                                {% for domain in resource['domains'] if domain['state'] == 'running' %}
+                                "{{ domain['name'] }}":{{ domain['memory'] }},
+                                {% endfor %}
+                                {% if (resource['total_memory_size'] | int) - (resource['domains_memory_used'] | int) > 0 %}
+                                "[FREE]":{{ (resource['total_memory_size'] | int) - (resource['domains_memory_used'] | int) }}
+                                {% endif %}
+                                }, true
+                                );
+                            //]]>
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="{{ kvm_host }}_vms" style="display: none">
+            <table class="table table-sm" id="{{ kvm_host }}_nodesTable">
+                <thead>
+                    <tr class="table-dark mb-5 text-warning bg-dark">
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',0)">name</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',1)">state</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',2)">vcpus</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',3)">memory</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',4)">disks sum</th>
+                        <th class="text-center">disks</th>
+                    </tr>
+                </thead>
+                <tbody class="align-middle">
+                {% for domain in resource['domains'] %}
+                    <tr name="{{ kvm_host }}_VMRow">
+                        <td class="text-center py-1 px-1">{{ domain['name'] }}</td>
+                        <td class="text-center text-success py-1 px-1">
+                            <i class="fas {{ 'fa-play' if domain['state'] == 'running' else 'fa-stop text-danger' }}"></i>
+                        </td>
+                        <td class="text-center py-1 px-1">{{ domain['vcpus'] }}</td>
+                        <td class="text-center py-1 px-1">{{ HumanReadFormat(domain['memory'] | int) }}
+                            <span style="display:none">{{ domain['memory'] }}</span>
+                        </td>
+                        <td class="text-center py-1 px-1">{{ HumanReadFormat(domain['disks_sum'] | int) }}
+                            <span style="display:none">{{ domain['disks_sum'] }}</span>
+                        </td>
+                        <td>
+                            <div class="w-100">
+                                <table class="w-100">
+                                    <tbody>
+                                    {% for dname, dinfo in domain['disks'].items() %}
+                                        <tr>
+                                            <td class="text-start py-1 px-1">{{ dname }}</td>
+                                            <td class="text-end py-1 px-1">{{ HumanReadFormat(dinfo | int)}}</td> 
+                                        </tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endfor %}
+</div>
+    <script type="text/javascript" src="{{ url_for('static', filename = 'js/mdb.min.js') }}"></script>
+    <script type="text/javascript">
+        //<![CDATA[
+            document.getElementById('Search').addEventListener('input', (event) => {
+                const search = event.target || event.srcElement;
+                var s = search.value.toLowerCase();
+                var divs = document.getElementsByName('NoDe');
+                for (var i=0;i<=divs.length-1;i++) {
+                    var div = divs[i];
+                    var node_name = div.getElementsByTagName("SPAN")[0].textContent;
+                    if (s.length > 0) {
+                        if (node_name.toLowerCase().indexOf(s)>-1) {
+                            div.style.display = 'block';
+                        }
+                        else {
+                            div.style.display = 'none';
+                        }
+
+                        var trs = document.getElementsByName(node_name+'_VMRow');
+                        var gotMatch = false;
+                        for (var k=0;k<=trs.length-1;k++) {
+                            var tr = trs[k];
+                            if (tr.textContent.toLowerCase().indexOf(s)>-1) {
+                                tr.style.display = 'table-row';
+                                gotMatch = true;
+                            }
+                            else {
+                                tr.style.display = 'none';
+                            }
+                        if (gotMatch) {
+                            div.style.display = 'block';
+                            document.getElementById(node_name+'_vms').style.display = 'block';
+                        }
+                        }
+                    }
+                    else {
+                        var trs = document.getElementsByName(node_name+'_VMRow');
+                        for (var k=0;k<=trs.length-1;k++) {
+                            var tr = trs[k];
+                            tr.style.display = 'table-row';
+                        }
+                        div.style.display = 'block';
+                        document.getElementById(node_name+'_vms').style.display = 'none';
+                    }
+                }
+            });
+
+            document.getElementById("btn-back-to-top").addEventListener("click", backToTop);
+
+            window.onscroll = function () {
+                scrollFunction();
+            };
+
+            /*window.onload = function () {
+            };*/
+
+            function scrollFunction() {
+                const topButton = document.getElementById("btn-back-to-top");
+                if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                    topButton.style.display = "block";
+                } else {
+                    topButton.style.display = "none";
+                }
+            }
+
+            function backToTop() {
+                document.body.scrollTop = 0;
+                document.documentElement.scrollTop = 0;
+            }
+
+            function SwitchVisibility(element_id) {
+                if (document.getElementById(element_id)) {
+                    var obj = document.getElementById(element_id);
+                    if (obj.style.display !== "block") { 
+                        obj.style.display = "block";
+                    }
+                    else obj.style.display = "none";
+                }
+            }
+
+            function sortTable(tid, n) {
+                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                table = document.getElementById(tid);
+                switching = true;
+                //Set the sorting direction to ascending:
+                dir = "asc"; 
+                /*Make a loop that will continue until
+                no switching has been done:*/
+                while (switching) {
+                    //start by saying: no switching is done:
+                    switching = false;
+                    rows = table.rows;
+                    /*Loop through all table rows (except the
+                    first, which contains table headers):*/
+                    for (i = 1; i < (rows.length - 1); i++) {
+                        //start by saying there should be no switching:
+                        shouldSwitch = false;
+                        /*Get the two elements you want to compare,
+                        one from current row and one from the next:*/
+                        x = rows[i].getElementsByTagName("TD")[n];
+                        y = rows[i + 1].getElementsByTagName("TD")[n];
+                        if (n>=3 && n<=4) {
+                            //human-like comparing
+                            x = x.getElementsByTagName("SPAN")[0];
+                            y = y.getElementsByTagName("SPAN")[0];
+                            /*check if the two rows should switch place,
+                            based on the direction, asc or desc:*/
+                            if (dir == "asc") {
+                                if (parseInt(x.innerHTML) > parseInt(y.innerHTML)) {
+                                    //if so, mark as a switch and break the loop:
+                                    shouldSwitch= true;
+                                    break;
+                                }
+                            } else if (dir == "desc") {
+                                if (parseInt(x.innerHTML) < parseInt(y.innerHTML)) {
+                                    //if so, mark as a switch and break the loop:
+                                    shouldSwitch = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            /*check if the two rows should switch place,
+                            based on the direction, asc or desc:*/
+                            if (dir == "asc") {
+                                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                    //if so, mark as a switch and break the loop:
+                                    shouldSwitch= true;
+                                    break;
+                                }
+                            } else if (dir == "desc") {
+                                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                    //if so, mark as a switch and break the loop:
+                                    shouldSwitch = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (shouldSwitch) {
+                        /*If a switch has been marked, make the switch
+                        and mark that a switch has been done:*/
+                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                        switching = true;
+                        //Each time a switch is done, increase this count by 1:
+                        switchcount ++;      
+                    } else {
+                        /*If no switching has been done AND the direction is "asc",
+                        set the direction to "desc" and run the while loop again.*/
+                        if (switchcount == 0 && dir == "asc") {
+                            dir = "desc";
+                            switching = true;
+                        }
+                    }
+                }
+                //<DEBUG>
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (n>=3 && n<=4) {
+                            //human-like comparing
+                            x = x.getElementsByTagName("SPAN")[0];
+                            y = y.getElementsByTagName("SPAN")[0];
+                        }
+                    console.log('upper: '+x.innerHTML.toLowerCase()+' lower: '+y.innerHTML.toLowerCase());
+                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                        console.log('>')
+                    }
+                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                        console.log('<')
+                    }
+                }
+                //</DEBUG>
+            }
+        //]]>
+    </script>
+</body>
+</html>

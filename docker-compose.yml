@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: "nginx_Dockerfile"
+      args:
+        - BASIC_USER=${BASIC_USER}
+        - BASIC_PASS=${BASIC_PASS}
+    env_file: .env
+    ports:
+      - "81:80"
+    depends_on:
+      - "flask"
+    restart: on-failure:5
+    networks:
+    - kvm_inspect_net
+    
+  flask:
+    build:
+      context: .
+      dockerfile: "flask_Dockerfile"
+    env_file: .env
+    restart: on-failure:5 
+    networks:
+    - kvm_inspect_net
+
+networks:
+  kvm_inspect_net:
+    driver: bridge
