@@ -46,7 +46,7 @@ def _inspector(kvm_node: str):
                 DOMAININFO.append(dom_info)
                 DOMAINDISKS.extend(dom_disks)
                                 
-            CMDLINE = 'cat /proc/cpuinfo | grep "model name" | uniq | cut -f2 -d ":"; echo "---"; df -lh | grep -Pv "(udev|tmpfs)" | awk \'{print $1 "*" $2 "*" $4 "*" $6}\' | tail -n+2;echo "---";ip a | grep "vnet" | wc -l;echo "---";du -s'
+            CMDLINE = 'cat /proc/cpuinfo | grep "model name" | uniq | cut -f2 -d ":"; echo "---"; df -lh | grep -Pv "(udev|tmpfs)" | awk \'{print $1 "*" $2 "*" $4 "*" $6}\' | tail -n+2;echo "---";ip a | grep "vnet" | wc -l;echo "---";hostname;echo "---";du -s'
             pos = 0
             overlen = False
             for disk_path in DOMAINDISKS:
@@ -60,7 +60,8 @@ def _inspector(kvm_node: str):
             NODEEXECINFO = host_exec.split('---')
             NODEDISKS = [ {"device_name":disk_i.split("*")[0], "device_size":disk_i.split("*")[1], "device_free_size":disk_i.split("*")[2], "mount_point":disk_i.split("*")[3]} for disk_i in NODEEXECINFO[1].split("\n")[1:-1] ]
             VNETCOUNT = int(NODEEXECINFO[2][1:-1])
-            DOMAINDISKSSIZE = { disk_i.split("\t")[1]: int(disk_i.split("\t")[0]) for disk_i in NODEEXECINFO[3].split("\n")[1:-1] }
+            HOSTNAME = NODEEXECINFO[3][1:-1]
+            DOMAINDISKSSIZE = { disk_i.split("\t")[1]: int(disk_i.split("\t")[0]) for disk_i in NODEEXECINFO[4].split("\n")[1:-1] }
             NODEINFO = host_kvm.hypervisor.nodeinfo()
             if overlen:
                 CMDLINE = 'du -s'
@@ -81,7 +82,7 @@ def _inspector(kvm_node: str):
             for dom in DOMAININFO:
                 DOMAINDISKUSED += dom['disks_sum']                      
 
-            raw_resurces = { kvm_node: {'cpu_model': NODEEXECINFO[0],
+            raw_resurces = { HOSTNAME: {'cpu_model': NODEEXECINFO[0],
                                         'vnet_count': VNETCOUNT,
                                         'cpu_sockets': NODEINFO['cpu_sockets'],
                                         'total_cpus': NODEINFO['cpus'],
@@ -96,3 +97,5 @@ def _inspector(kvm_node: str):
         return raw_resurces
     except unix.UnixError as e:
         raise Exception(f'{e} for {kvm_node}')
+
+print(_inspector(kvm_node='virt07.lenvendo.ru'))

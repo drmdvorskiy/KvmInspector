@@ -3,7 +3,7 @@ Inventory for KVM hosts with web interface
 
 ## Installation
 ***ATTENTION !!! You need to make sure that the `kvm node` is available via `ssh` from the virtual machine (node) where the containers with the application work.***
-* Copy ssh keys to the project directory
+* Copy `.ssh` directory with `ssh keys` to the project directory
 * Rename `example.env` to `.env` and edit settings:
     * LISTOFNODES - Comma delimited KVM nodes to be inspected. (string)
     * MemoryForOs - The amount of memory required by the OS on the KVM node. (integer number)

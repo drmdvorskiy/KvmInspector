@@ -12,11 +12,11 @@ def HumanReadFormat(size: int):
         return "0KB"
     
 
-    
+inspect=inspector(LISTOFNODES)    
 app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def kvm_inspect():
-    return render_template('index.html', inspect=inspector(LISTOFNODES), CpuForOs=CpuForOs, MemoryForOs=MemoryForOs, HumanReadFormat=HumanReadFormat)
+    return render_template('index.html', inspect=inspect, CpuForOs=CpuForOs, MemoryForOs=MemoryForOs, HumanReadFormat=HumanReadFormat)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, threaded=False)

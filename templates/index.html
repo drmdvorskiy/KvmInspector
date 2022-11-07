@@ -70,14 +70,14 @@
         margin: auto;
     }
     </style>
-    <title>KVM Inspector</title>
+    <title>KVM Инспектор</title>
 </head>
 
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark position-fixed w-100">
     <div class="container-fluid">
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <input class="form-control form-control-dark mx-5" id="Search" type="text" placeholder="Search for node / VM / VM disk">
+            <input class="form-control form-control-dark mx-5" id="Search" type="text" placeholder="Поиск...">
         </div>
     </div>
 </nav>
@@ -95,33 +95,30 @@
         <i role="button" onclick="SwitchVisibility('{{ kvm_host }}_vms')" class="fab fa-buffer fa-2x align-middle my-1"></i>
         <div id="{{ kvm_host }}_node" style="display: none" class="container mx-0 px-2">
             <div class="row">
-                <div class="col">
-                    <span class="text-info me-2">CPU model</span>{{ resource['cpu_model'] }}<br>
-                    <span class="text-info me-2">CPU sockets</span>{{ resource['cpu_sockets'] }}<br>
-                    <span class="text-info me-2">Threads per core</span>{{ resource['threads_per_core'] }}<br>
-                    <span class="text-info me-2">Total CPUs</span>{{ resource['total_cpus'] }}<br>
-                    <span class="text-info me-2">Total memory size</span>{{ HumanReadFormat(resource['total_memory_size'] | int) }}<br>
-                    {% if (resource['domains_cpu_used'] + CpuForOs) > resource['total_cpus'] %}
-                        <span class="text-info me-2">Domains CPUs used</span><span class="text-danger fw-bold me-2">{{ resource['domains_cpu_used'] }}</span><br>
-                    {% else %}
-                        <span class="text-info me-2">Domains CPUs used</span>{{ resource['domains_cpu_used'] }}<br>
-                    {% endif %}
-                    <span class="text-info me-2">Domains disk used</span>{{ HumanReadFormat(resource['domains_disk_used'] | int) }}<br>
-                    {% if (resource['domains_memory_used'] + MemoryForOs) > (resource['total_memory_size'] | int) %}
-                        <span class="text-info me-2">Domains memory used</span><span class="text-danger fw-bold me-2">{{ HumanReadFormat(resource['domains_memory_used'] | int) }}</span><br>
-                    {% else %}
-                        <span class="text-info me-2">Domains memory used</span>{{ HumanReadFormat(resource['domains_memory_used'] | int) }}<br>
-                    {% endif %}    
-                    <span class="text-info me-2">VNETs count</span>{{ resource['vnet_count'] }}<br>
+                <div class="col me-2">
+                    <table class="table-sm mb-0">
+                        <tbody>
+                            <tr class="align-text-top"><td class="text-info pt-0">Модель ЦПУ</td><td class="px-2 py-0 text-end text-nowrap">{{ resource['cpu_model'] }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">Количество сокетов</td><td class="px-2 py-0 text-end">{{ resource['cpu_sockets'] }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">Потоков на ядро</td><td class="px-2 py-0 text-end">{{ resource['threads_per_core'] }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">Всего ЦПУ</td><td class="px-2 py-0 text-end">{{ resource['total_cpus'] }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">Всего памяти</td><td class="px-2 py-0 text-end">{{ HumanReadFormat(resource['total_memory_size'] | int) }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">ЦПУ использовано ВМ</td><td class="px-2 py-0 text-end {{ 'text-danger' if (resource['domains_cpu_used'] + CpuForOs) > resource['total_cpus'] }}">{{ resource['domains_cpu_used'] }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">Дисков использовано ВМ</td><td class="px-2 py-0 text-end">{{ HumanReadFormat(resource['domains_disk_used'] | int) }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0">Памяти использовано ВМ</td><td class="px-2 py-0 text-end {{ 'text-danger' if (resource['domains_memory_used'] + MemoryForOs) > (resource['total_memory_size'] | int) }}">{{ HumanReadFormat(resource['domains_memory_used'] | int) }}</td></tr>
+                            <tr class="align-text-top"><td class="text-info py-0 text-nowrap">Количество виртуальных интерфейсов</td><td class="px-2 py-0 text-end">{{ resource['vnet_count'] }}</td></tr>
+                        <tbody>
+                        </thead>
+                    </table>
                 </div>
                 <div class="col">
                     <table class="table-sm mb-0">
                         <thead>
                             <tr class="text-info">
-                                <th class="px-2 pt-0 pb-0 fw-normal">Device name</th>
-                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal">Mount point</th>
-                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal">Device size</th>
-                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal">Device free size</th>
+                                <th class="px-2 pt-0 pb-0 fw-normal align-text-top">Имя устройства</th>
+                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal align-text-top">Точка монтирования</th>
+                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal align-text-top">Размер</th>
+                                <th class="px-2 mx-4 pt-0 pb-0 fw-normal align-text-top">Свободное место</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,7 +134,7 @@
                     </table>
                     <div class="row mb-2">
                         <div class="chart-container mx-0 px-0 mt-1">
-                            <span class="badge rounded-pill bg-dark">CPU</span>
+                            <span class="badge rounded-pill bg-dark">ЦПУ</span>
                             <canvas id="{{ kvm_host }}CPUChart"></canvas>
                             <script type="text/javascript">
                             //<![CDATA[
@@ -154,7 +151,7 @@
                             </script>
                         </div>
                         <div class="chart-container mx-0 px-0 mt-1">
-                            <span class="badge rounded-pill bg-dark">RAM</span>
+                            <span class="badge rounded-pill bg-dark">Память</span>
                             <canvas id="{{ kvm_host }}RAMChart"></canvas>
                             <script type="text/javascript">
                             //<![CDATA[
@@ -178,12 +175,12 @@
             <table class="table table-sm" id="{{ kvm_host }}_nodesTable">
                 <thead>
                     <tr class="table-dark mb-5 text-warning bg-dark">
-                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',0)">name</th>
-                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',1)">state</th>
-                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',2)">vcpus</th>
-                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',3)">memory</th>
-                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',4)">disks sum</th>
-                        <th class="text-center">disks</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',0);">Имя</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',1);">Статус</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',2);">ЦПУ</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',3);">Память</th>
+                        <th role="button" class="text-center" onclick="sortTable('{{ kvm_host }}_nodesTable',4);">Сумма дисков</th>
+                        <th class="text-center">Диски</th>
                     </tr>
                 </thead>
                 <tbody class="align-middle">
@@ -193,8 +190,8 @@
                         <td class="text-center text-success py-1 px-1">
                             <i class="fas {{ 'fa-play' if domain['state'] == 'running' else 'fa-stop text-danger' }}"></i>
                         </td>
-                        <td class="text-center py-1 px-1">{{ domain['vcpus'] }}</td>
-                        <td class="text-center py-1 px-1">{{ HumanReadFormat(domain['memory'] | int) }}
+                        <td class="text-center py-1 px-1" name="{{ domain['state'] }}">{{ domain['vcpus'] }}</td>
+                        <td class="text-center py-1 px-1" name="{{ domain['state'] }}">{{ HumanReadFormat(domain['memory'] | int) }}
                             <span style="display:none">{{ domain['memory'] }}</span>
                         </td>
                         <td class="text-center py-1 px-1">{{ HumanReadFormat(domain['disks_sum'] | int) }}
@@ -302,7 +299,7 @@
                 }
             }
 
-            function sortTable(tid, n) {
+            function _sortTable(tid, n, byState=false, filter=false, filterByState='') {
                 var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
                 table = document.getElementById(tid);
                 switching = true;
@@ -323,39 +320,88 @@
                         one from current row and one from the next:*/
                         x = rows[i].getElementsByTagName("TD")[n];
                         y = rows[i + 1].getElementsByTagName("TD")[n];
+                        if (filter) {
+                            if (x.getAttribute('name') !== filterByState || y.getAttribute('name') !== filterByState) {
+                                continue;
+                            }
+                        }
                         if (n>=3 && n<=4) {
-                            //human-like comparing
-                            x = x.getElementsByTagName("SPAN")[0];
-                            y = y.getElementsByTagName("SPAN")[0];
-                            /*check if the two rows should switch place,
-                            based on the direction, asc or desc:*/
-                            if (dir == "asc") {
-                                if (parseInt(x.innerHTML) > parseInt(y.innerHTML)) {
-                                    //if so, mark as a switch and break the loop:
-                                    shouldSwitch= true;
-                                    break;
+                            if (byState && n===3) {
+                                //comparing by state
+                                x = x.getAttribute('name');
+                                y = y.getAttribute('name');
+                                /*check if the two rows should switch place,
+                                based on the direction, asc or desc:*/
+                                if (dir === "asc") {
+                                    if (x === 'shut off' && y === 'running') {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch= true;
+                                        break;
+                                    }
                                 }
-                            } else if (dir == "desc") {
-                                if (parseInt(x.innerHTML) < parseInt(y.innerHTML)) {
-                                    //if so, mark as a switch and break the loop:
-                                    shouldSwitch = true;
-                                    break;
+                                /*else if (dir === "desc") {
+                                    if (x === 'running' && y === 'shut off') {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch = true;
+                                        break;
+                                    }
+                                }*/
+                            } else {
+                                //human-like comparing
+                                x = x.getElementsByTagName("SPAN")[0];
+                                y = y.getElementsByTagName("SPAN")[0];
+                                /*check if the two rows should switch place,
+                                based on the direction, asc or desc:*/
+                                if (dir == "asc") {
+                                    if (parseInt(x.innerHTML) > parseInt(y.innerHTML)) {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch= true;
+                                        break;
+                                    }
+                                } else if (dir == "desc") {
+                                    if (parseInt(x.innerHTML) < parseInt(y.innerHTML)) {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch = true;
+                                        break;
+                                    }
                                 }
                             }
                         } else {
-                            /*check if the two rows should switch place,
-                            based on the direction, asc or desc:*/
-                            if (dir == "asc") {
-                                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                                    //if so, mark as a switch and break the loop:
-                                    shouldSwitch= true;
-                                    break;
+                            if (byState && n===2) {
+                                //comparing by state
+                                x = x.getAttribute('name');
+                                y = y.getAttribute('name');
+                                /*check if the two rows should switch place,
+                                based on the direction, asc or desc:*/
+                                if (dir === "asc") {
+                                    if (x === 'shut off' && y === 'running') {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch= true;
+                                        break;
+                                    }
                                 }
-                            } else if (dir == "desc") {
-                                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                                    //if so, mark as a switch and break the loop:
-                                    shouldSwitch = true;
-                                    break;
+                                /*else if (dir === "desc") {
+                                    if (x === 'running' && y === 'shut off') {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch = true;
+                                        break;
+                                    }
+                                }*/
+                            } else {
+                                /*check if the two rows should switch place,
+                                based on the direction, asc or desc:*/
+                                if (dir == "asc") {
+                                    if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch= true;
+                                        break;
+                                    }
+                                } else if (dir == "desc") {
+                                    if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                        //if so, mark as a switch and break the loop:
+                                        shouldSwitch = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -395,6 +441,13 @@
                     }
                 }
                 //</DEBUG>
+            }
+
+            function sortTable(tid, n) {
+                _sortTable(tid, n, true);
+                _sortTable(tid, n, false, true, 'running');
+                _sortTable(tid, n, false, true, 'shut off');
+
             }
         //]]>
     </script>
